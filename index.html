@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="loanCalculator.css">
+    <title>Kredi Hesaplayıcı</title>
+    <style>
+        .payment-row {
+            border: 1px solid #000;
+            padding: 5px;
+            margin: 5px 0;
+        }
+    </style>
+</head>
+<body>
+    <div id="loancal">
+        <h1>Kredi Hesaplayıcı</h1>
+        <label for="amount">Kredi Tutarı (TL):</label>
+        <input type="text" id="amount" placeholder="Örneğin: 10000">
+
+        <label for="bank">Banka Seçin:</label>
+        <select id="bank" onchange="updateInterestRates()">
+            <option value="">Seçiniz</option>
+            <option value="ziraat">Ziraat Bankası</option>
+            <option value="halkbank">Halkbank</option>
+            <option value="vakifbank">VakıfBank</option>
+            <option value="garanti">Garanti Bankası</option>
+            <option value="isbank">İş Bankası</option>
+            <option value="yapikredi">Yapı Kredi</option>
+            <option value="qnb">QNB Finansbank</option>
+            <option value="denizbank">Denizbank</option>
+        </select>
+
+        <div id="interestRates"></div>
+
+        <label for="type">Kredi Türü:</label>
+        <select id="type">
+            <option value="">Seçiniz</option>
+            <option value="ihtiyaç">İhtiyaç Kredisi</option>
+            <option value="taşıt">Taşıt Kredisi</option>
+            <option value="konut">Konut Kredisi</option>
+        </select>
+
+        <label for="months">Vade (Ay):</label>
+        <select id="months">
+            <option value="3">3 Ay</option>
+            <option value="6">6 Ay</option>
+            <option value="9">9 Ay</option>
+            <option value="12">12 Ay</option>
+            <option value="15">15 Ay</option>
+            <option value="18">18 Ay</option>
+            <option value="24">24 Ay</option>
+            <option value="36">36 Ay</option>
+        </select>
+
+        <label for="startDate">Ödeme Başlangıç Tarihi:</label>
+        <input type="date" id="startDate" min="2024-10-31" max="2099-12-31">
+
+        <button onclick="calculateLoan()">Hesapla</button>
+
+        <div id="payment"></div>
+        <div id="ratesDisplay" style="display: none;">
+            <h2>Ödeme Bilgileri:</h2>
+            <div id="ratesTable"></div>
+        </div>
+
+        <div id="totalPaymentInfo"></div>
+    </div>
+
+    <script>
+        function updateInterestRates() {
+            var bank = document.getElementById('bank').value;
+            var interestRates = "";
+
+            // Güncel faiz oranları
+            switch (bank) {
+                case "ziraat":
+                    interestRates = "İhtiyaç Kredisi: %20 - %25<br>Taşıt Kredisi: %18 - %23<br>Konut Kredisi: %15 - %20";
+                    break;
+                case "halkbank":
+                    interestRates = "İhtiyaç Kredisi: %19 - %24<br>Taşıt Kredisi: %17 - %22<br>Konut Kredisi: %16 - %21";
+                    break;
+                case "vakifbank":
+                    interestRates = "İhtiyaç Kredisi: %20 - %25<br>Taşıt Kredisi: %18 - %23<br>Konut Kredisi: %15 - %20";
+                    break;
+                case "garanti":
+                    interestRates = "İhtiyaç Kredisi: %22 - %27<br>Taşıt Kredisi: %20 - %25<br>Konut Kredisi: %18 - %23";
+                    break;
+                case "isbank":
+                    interestRates = "İhtiyaç Kredisi: %21 - %26<br>Taşıt Kredisi: %19 - %24<br>Konut Kredisi: %17 - %22";
+                    break;
+                case "yapikredi":
+                    interestRates = "İhtiyaç Kredisi: %22 - %27<br>Taşıt Kredisi: %20 - %25<br>Konut Kredisi: %18 - %23";
+                    break;
+                case "qnb":
+                    interestRates = "İhtiyaç Kredisi: %23 - %28<br>Taşıt Kredisi: %21 - %26<br>Konut Kredisi: %19 - %24";
+                    break;
+                case "denizbank":
+                    interestRates = "İhtiyaç Kredisi: %21 - %26<br>Taşıt Kredisi: %19 - %24<br>Konut Kredisi: %17 - %22";
+                    break;
+                default:
+                    interestRates = "Lütfen bir banka seçiniz.";
+                    break;
+            }
+
+            document.getElementById('interestRates').innerHTML = interestRates;
+        }
+
+        function calculateLoan() {
+            const amount = parseFloat(document.getElementById('amount').value);
+            const bank = document.getElementById('bank').value;
+            const type = document.getElementById('type').value;
+            const months = parseInt(document.getElementById('months').value);
+            const startDateInput = document.getElementById('startDate').value;
+
+            // Kredi tutarının kontrolü
+            if (!amount || amount <= 0) {
+                alert('Kredi tutarı 0\'dan büyük olmalıdır.');
+                return;
+            }
+
+            // Banka ve kredi türü kontrolü
+            if (!bank || !type) {
+                alert('Lütfen banka ve kredi türü giriniz.');
+                return;
+            }
+
+            // Tarih kontrolü
+            if (!startDateInput) {
+                alert('Lütfen tarih giriniz.');
+                return;
+            }
+
+            const startDate = new Date(startDateInput);
+
+        
+            const today = new Date();
+            // Tarih aralığı kontrolü
+            const minDate = today; 
+            const maxDate = new Date("2099-12-31");
+            if (startDate < minDate || startDate > maxDate) {
+                alert(`Tarih ${minDate.getDate()}/${minDate.getMonth() + 1}/${minDate.getFullYear()} - 31/12/2099 arasında olmalıdır.`);
+                return;
+            }
+
+            // Banka ve kredi türüne göre faiz oranı
+            var interestRate;
+            switch (bank) {
+                case "ziraat":
+                    interestRate = type === "ihtiyaç" ? 0.20 : type === "taşıt" ? 0.18 : 0.15;
+                    break;
+                case "halkbank":
+                    interestRate = type === "ihtiyaç" ? 0.19 : type === "taşıt" ? 0.17 : 0.16;
+                    break;
+                case "vakifbank":
+                    interestRate = type === "ihtiyaç" ? 0.20 : type === "taşıt" ? 0.18 : 0.15;
+                    break;
+                case "garanti":
+                    interestRate = type === "ihtiyaç" ? 0.22 : type === "taşıt" ? 0.20 : 0.18;
+                    break;
+                case "isbank":
+                    interestRate = type === "ihtiyaç" ? 0.21 : type === "taşıt" ? 0.19 : 0.17;
+                    break;
+                case "yapikredi":
+                    interestRate = type === "ihtiyaç" ? 0.22 : type === "taşıt" ? 0.20 : 0.18;
+                    break;
+                case "qnb":
+                    interestRate = type === "ihtiyaç" ? 0.23 : type === "taşıt" ? 0.21 : 0.19;
+                    break;
+                case "denizbank":
+                    interestRate = type === "ihtiyaç" ? 0.21 : type === "taşıt" ? 0.19 : 0.17;
+                    break;
+            }
+
+            // Aylık taksit hesaplama
+            const monthlyInterest = interestRate / 12;
+            const monthlyPayment = (amount * monthlyInterest) / (1 - Math.pow(1 + monthlyInterest, -months)); 
+            const totalPayment = monthlyPayment * months; // Toplam ödeme hesaplama
+            const paymentDisplay = document.getElementById('payment');
+            const ratesDisplay = document.getElementById('ratesDisplay');
+            const ratesTable = document.getElementById('ratesTable');
+            const totalPaymentInfo = document.getElementById('totalPaymentInfo');
+
+            paymentDisplay.innerHTML = `Aylık Taksit: ${monthlyPayment.toFixed(2)} TL`;
+            ratesDisplay.style.display = 'block';
+            ratesTable.innerHTML = '';
+
+            // Ödeme bilgilerini yazdırma
+            const monthsNames = ['Ocak', 'Şubat', 'Mart', 'Nisan', 'Mayıs', 'Haziran', 'Temmuz', 'Ağustos', 'Eylül', 'Ekim', 'Kasım', 'Aralık'];
+            for (let month = 0; month < months; month++) {
+                const dueDate = new Date(startDate);
+                dueDate.setMonth(dueDate.getMonth() + month);
+                
+                // Tarih formatını gün/ay/yıl şeklinde ayarlama
+                const day = String(dueDate.getDate()).padStart(2, '0');
+                const monthName = monthsNames[dueDate.getMonth()];
+                const year = dueDate.getFullYear();
+                
+                ratesTable.innerHTML += `
+                    <div class="payment-row">
+                        ${day}/${String(dueDate.getMonth() + 1).padStart(2, '0')}/${year} - ${monthlyPayment.toFixed(2)} TL
+                    </div>
+                `;
+            }
+
+            // Toplam ödeme tutarını göster
+            totalPaymentInfo.innerHTML = `Toplam Ödenecek Tutar: ${totalPayment.toFixed(2)} TL`;
+        }
+    </script>
+</body>
+</html>
